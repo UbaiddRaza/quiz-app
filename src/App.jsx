@@ -1,49 +1,89 @@
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
 
 function App() {
-const [question, setquestion] = useState(null)
-const [currentIndex, setcurrentIndex] = useState(0)
+  const [questions, setQuestions] = useState([]); 
+  const [currentIndex, setCurrentIndex] = useState(0); 
+  const [selectedOption, setSelectedOption] = useState(null); 
+  const [score, setScore] = useState(0); 
+  const [showScore, setShowScore] = useState(false); 
+  const input = useRef([]);
+
   useEffect(() => {
-    axios('https://the-trivia-api.com/v2/questions')
+    axios.get('https://the-trivia-api.com/v2/questions')
       .then((res) => {
         console.log(res.data);
-        setquestion(res.data)
+        setQuestions(res.data); 
       })
       .catch((err) => {
-        console.log(err);
+        console.error("Error fetching questions:", err); 
       });
   }, []);
 
-
-  const nextQuestion = ()=>{
-    if (currentIndex < question.length -1){
-      setcurrentIndex(currentIndex + 1)
-      return
+  const nextQuestion = () => {
+    if (selectedOption === questions[currentIndex]?.correctAnswer) {
+      setScore(score + 10);
     }
-  }
-  return (
-    <>
-     <h1>Quiz</h1>
-     {question ? 
-     <div><h1>Q{currentIndex + 1}: {question[currentIndex].question.text}</h1>
-     {question[currentIndex].incorrectAnswers.map((item, index)=>{
-    return <div key={'option${index}'}>
-      <input type="radio" value={item} name ='question' id={index}/>
-        <label htmlFor={index}>{item}</label>
-       
-     </div>
-     })}
-      <input type="radio" value={question[currentIndex].correctAnswer} name ='question' id='q'/>
-        <label htmlFor='q'>{question[currentIndex].correctAnswer}</label>
-       <br />
-       <br />
-     <button onClick={nextQuestion}>Next</button>
 
-     </div> : <h1>Loading...</h1>}
-   
-    </>
-   
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(currentIndex + 1); 
+      setSelectedOption(null); 
+    } else {
+      setShowScore(true); 
+    }
+  };
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+    }
+    return arr;
+  }
+
+  const options = questions.length > 0 ? shuffleArray([
+    ...questions[currentIndex]?.incorrectAnswers,
+    questions[currentIndex]?.correctAnswer,
+  ]) : [];
+
+  return (
+    <div className="quiz-container">
+      <h1>Quiz</h1>
+      {showScore ? (
+        <div className="score-container">
+          <h1>Quiz Complete!</h1>
+          <h1>Score: {score}/100</h1>
+        </div>
+      ) : (
+        <div>
+          {questions.length > 0 ? (
+            <>
+              <h1 className="question">Q{currentIndex + 1}: {questions[currentIndex]?.question.text}</h1>
+              <div className="options">
+                {options.map((item, index) => (
+                  <div className="option" key={`option${index}`}>
+                    <input
+                      type="radio"
+                      name='question'
+                      value={item}
+                      id={`option${index}`}
+                      ref={el => input.current[index] = el}
+                      onChange={() => setSelectedOption(item)} 
+                      checked={selectedOption === item} 
+                    />
+                    <label htmlFor={`option${index}`}>{item}</label>
+                  </div>
+                ))}
+              </div>
+              <br />
+              <button onClick={nextQuestion}>Next</button>
+            </>
+          ) : (
+            <h1 className="loading">Loading questions...</h1>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
