@@ -52,6 +52,7 @@ function App() {
       {showScore ? (
         <div className="score-container">
           <h1>Quiz Complete!</h1>
+          <h1>Better luck next time</h1>
           <h1>Score: {score}/100</h1>
         </div>
       ) : (
